@@ -332,7 +332,7 @@ public final class HiveConnectionRW {
 	 * @return error string or null, if non
 	 * @throws Exception if connection could not be established
 	 */
-	static final String writeData(
+	final String writeData(
 	        final String table, final BufferedDataTable data,
 	        final boolean appendData, final ExecutionMonitor exec,
 	        final Map<String, String> sqlTypes) throws Exception {

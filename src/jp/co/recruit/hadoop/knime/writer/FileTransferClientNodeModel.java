@@ -1,11 +1,8 @@
 package jp.co.recruit.hadoop.knime.writer;
 
 
-// import org.knime.base.node.io.csvwriter.FileWriterSettings;
 import org.knime.base.node.io.csvwriter.CSVWriter;
 import org.knime.base.node.io.csvwriter.FileWriterSettings;
-// import org.knime.base.node.io.database.DBWriterConnection;
-// import org.knime.base.node.io.database.DBWriterNodeModel;
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataRow;
@@ -17,7 +14,6 @@ import org.knime.core.data.IntValue;
 import org.knime.core.data.RowKey;
 import org.knime.core.data.date.DateAndTimeValue;
 import org.knime.core.data.def.DefaultRow;
-import org.knime.core.data.def.DoubleCell;
 import org.knime.core.data.def.IntCell;
 import org.knime.core.data.def.StringCell;
 import org.knime.core.node.BufferedDataContainer;
@@ -28,17 +24,13 @@ import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.node.NodeModel;
-import org.knime.core.node.NodeSettings;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
-import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.database.DatabasePortObjectSpec;
 import org.knime.core.node.port.database.DatabaseQueryConnectionSettings;
-import org.knime.core.node.port.database.DatabaseReaderConnection;
 
 import java.io.File;
 import java.io.FileInputStream;
-// import java.io.FileOutputStream;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -60,7 +52,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.vfs.VFS;
 import org.apache.commons.vfs.FileObject;
 import org.apache.commons.vfs.FileSystemManager;
-import org.apache.commons.vfs.FileType;
 import org.apache.commons.vfs.FileSystemOptions;
 import org.apache.commons.vfs.provider.sftp.SftpFileSystemConfigBuilder;
 
@@ -197,12 +188,12 @@ final class FileTransferClientNodeModel extends NodeModel {
             final ExecutionContext exec) throws CanceledExecutionException,
             IOException {
 
-    	Integer intRet = -2;
+    	int intRet = -2;
+        final String strFileName = "/tmp/hivewriter_" + System.identityHashCode(this) + ".csv";
     	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
     	// 結果をファイルに書き出す
     	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     	m_settings = new FileWriterNodeSettings();
-    	FileWriterSettings writerSettings = new FileWriterSettings(m_settings);
     	csv_execute(inData,exec);
     	
     	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
@@ -220,11 +211,11 @@ final class FileTransferClientNodeModel extends NodeModel {
     	// （ホームディレクトリからの相対パス指定はうまく動作しませんでした）
     	String execUrl = "sftp://"
 			+ m_config.m_user + ":" + "xxx" + "@"
-			+ m_config.m_serverurl + m_config.m_to;    	
+			+ m_config.m_serverurl + strFileName;    	
     	LOGGER.info("execUrl: " + execUrl);
     	execUrl = "sftp://"
 			+ m_config.m_user + ":" + m_config.m_password + "@"
-			+ m_config.m_serverurl + m_config.m_to;    	
+			+ m_config.m_serverurl + strFileName;    	
     	FileObject fileObj = fsm.resolveFile(execUrl, opts);
     	
     	// IOUtilsの使い方
@@ -262,7 +253,7 @@ final class FileTransferClientNodeModel extends NodeModel {
     	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
         exec.setProgress("Making Hive load file ...");
         ResultSet result = execHiveQuery(
-        		"load data local inpath '" + m_config.m_to + "' overwrite into table " + m_config.table
+        		"load data local inpath '" + strFileName + "' overwrite into table " + m_config.table
         );
     	if(result != null){
         	intRet++;

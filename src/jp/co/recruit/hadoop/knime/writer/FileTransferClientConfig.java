@@ -10,8 +10,8 @@ import org.knime.core.node.port.database.DatabaseDriverLoader;
 
 final class FileTransferClientConfig {
 
-    public String m_from;
-    public String m_to;
+//    public String m_from;
+//    public String m_to;
     public String m_user;
     public String m_password;
     public String m_serverurl;
@@ -25,8 +25,8 @@ final class FileTransferClientConfig {
     public Set<String> tables = null;
 
     public void loadSettingsInDialog(final NodeSettingsRO settings) {
-    	m_from = settings.getString("from", "from");
-    	m_to = settings.getString("to", "to");
+//    	m_from = settings.getString("from", "from");
+//    	m_to = settings.getString("to", "to");
     	m_user = settings.getString("suser", "suser");
     	m_password = settings.getString("spassword", "spassword");
     	m_serverurl = settings.getString("serverurl", "serverurl");
@@ -45,8 +45,8 @@ final class FileTransferClientConfig {
     }
     
     public void loadSettingsInModel(final NodeSettingsRO settings) throws InvalidSettingsException {
-    	m_from = settings.getString("from");
-    	m_to = settings.getString("to");
+//    	m_from = settings.getString("from");
+//    	m_to = settings.getString("to");
     	m_user = settings.getString("suser");
     	m_password = settings.getString("spassword");
     	m_serverurl = settings.getString("serverurl");
@@ -66,8 +66,8 @@ final class FileTransferClientConfig {
     }
     
     public void saveSettingsTo(final NodeSettingsWO settings) {
-        settings.addString("from", m_from);
-        settings.addString("to", m_to);
+//        settings.addString("from", m_from);
+//        settings.addString("to", m_to);
         settings.addString("suser", m_user);
         settings.addString("spassword", m_password);
         settings.addString("serverurl", m_serverurl);

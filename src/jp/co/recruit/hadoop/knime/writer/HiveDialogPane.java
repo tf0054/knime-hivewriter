@@ -124,45 +124,14 @@ final class HiveDialogPane extends JPanel {
         super.add(serverPanel);
         
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-        JPanel fromPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        fromPanel.setBorder(BorderFactory.createTitledBorder(" From "));
-        m_from.setPreferredSize(new Dimension(400, 20));
-        m_from.setFont(FONT);
-        // ファイル選択画面
-		JButton button = new JButton("Browse");
-		button.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				int result = fc.showOpenDialog( m_from );
-				if(result == JFileChooser.APPROVE_OPTION) {
-					m_from.setText( fc.getSelectedFile().getPath() );
-					if(m_to.getText().length() == 0){
-						m_to.setText( "/tmp/" + fc.getSelectedFile().getName() );
-					}
-				}
-				if(result == JFileChooser.CANCEL_OPTION) {
-					m_from.setText( "canceled" );
-				}
-				if(result == JFileChooser.ERROR_OPTION) {
-					m_from.setText( "canceled or error" );
-				}
-			}
-		});
-		// パネルに貼り付け
-        fromPanel.add(m_from);
-        fromPanel.add(button);
-        super.add(fromPanel);
+        // super.add(fromPanel);
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-        JPanel toPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        toPanel.setBorder(BorderFactory.createTitledBorder(" To "));
-        m_to.setPreferredSize(new Dimension(400, 20));
-        m_to.setFont(FONT);
-        toPanel.add(m_to);
-        super.add(toPanel);
+        // super.add(toPanel);
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
         JPanel userPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        userPanel.setBorder(BorderFactory.createTitledBorder(" User name "));
+        userPanel.setBorder(BorderFactory.createTitledBorder(" sftp Username "));
         m_user.setPreferredSize(new Dimension(400, 20));
         m_user.setFont(FONT);
         userPanel.add(m_user);
@@ -170,7 +139,7 @@ final class HiveDialogPane extends JPanel {
         
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
         JPanel passPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        passPanel.setBorder(BorderFactory.createTitledBorder(" Password "));
+        passPanel.setBorder(BorderFactory.createTitledBorder(" sftp Password "));
         m_pass.setPreferredSize(new Dimension(400, 20));
         m_pass.setFont(FONT);
         m_pass.getDocument().addDocumentListener(new DocumentListener() {
@@ -278,13 +247,6 @@ final class HiveDialogPane extends JPanel {
         String strServer = settings.getString("serverurl", null);
         m_serverurl.setText(strServer == null ? "" : config.m_serverurl);
 
-        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-        String strFrom = settings.getString("from", null);
-        m_from.setText(strFrom == null ? "" : config.m_from);
-        
-        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-        String strTo = settings.getString("to", null);
-        m_to.setText(strTo == null ? "" : config.m_to);
         /*
         LOGGER.error("loadSettingsFrom from/to: " 
         		+ settings.getString("from", null)
@@ -328,14 +290,6 @@ final class HiveDialogPane extends JPanel {
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
         settings.addString("serverurl", m_serverurl.getText().trim());
     	config.m_serverurl = m_serverurl.getText().trim();
-
-        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-    	settings.addString("from", m_from.getText().trim());
-    	config.m_from = m_from.getText().trim();
-    	
-        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-        settings.addString("to", m_to.getText().trim());
-    	config.m_to = m_to.getText().trim();
 
     	//LOGGER.error("saveSettingsTo from/to: "+ m_from.getText().trim()+"/"+m_to.getText().trim());
         
