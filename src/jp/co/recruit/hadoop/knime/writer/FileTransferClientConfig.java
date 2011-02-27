@@ -10,8 +10,6 @@ import org.knime.core.node.port.database.DatabaseDriverLoader;
 
 final class FileTransferClientConfig {
 
-//    public String m_from;
-//    public String m_to;
     public String m_user;
     public String m_password;
     public String m_serverurl;
@@ -23,10 +21,10 @@ final class FileTransferClientConfig {
     
     public String table = "";
     public Set<String> tables = null;
+    public Boolean csvSerde = true;
 
-    public void loadSettingsInDialog(final NodeSettingsRO settings) {
-//    	m_from = settings.getString("from", "from");
-//    	m_to = settings.getString("to", "to");
+    public void loadSettingsInDialog(final NodeSettingsRO settings) throws InvalidSettingsException {
+
     	m_user = settings.getString("suser", "suser");
     	m_password = settings.getString("spassword", "spassword");
     	m_serverurl = settings.getString("serverurl", "serverurl");
@@ -42,11 +40,11 @@ final class FileTransferClientConfig {
 		} catch (InvalidSettingsException e) {
 			e.printStackTrace();
 		};
+		csvSerde = settings.getBoolean("csvSerde", true);
     }
     
     public void loadSettingsInModel(final NodeSettingsRO settings) throws InvalidSettingsException {
-//    	m_from = settings.getString("from");
-//    	m_to = settings.getString("to");
+
     	m_user = settings.getString("suser");
     	m_password = settings.getString("spassword");
     	m_serverurl = settings.getString("serverurl");
@@ -56,6 +54,7 @@ final class FileTransferClientConfig {
     	driver = settings.getString("driver");
     	database = settings.getString("database");
     	statement = settings.getString("statement");
+    	
     	// for selecting-table
     	table = settings.getString("table");
     	try {
@@ -63,11 +62,11 @@ final class FileTransferClientConfig {
 		} catch (InvalidSettingsException e) {
 			e.printStackTrace();
 		};
+		csvSerde = settings.getBoolean("csvSerde");
     }
     
     public void saveSettingsTo(final NodeSettingsWO settings) {
-//        settings.addString("from", m_from);
-//        settings.addString("to", m_to);
+
         settings.addString("suser", m_user);
         settings.addString("spassword", m_password);
         settings.addString("serverurl", m_serverurl);
@@ -80,5 +79,7 @@ final class FileTransferClientConfig {
         
         settings.addString("table", table);
         settings.addStringArray("tables", tables.toArray(new String[0]));
+
+        settings.addBoolean("csvSerde", csvSerde);
     }
 }

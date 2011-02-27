@@ -3,20 +3,15 @@ package jp.co.recruit.hadoop.knime.writer;
 
 import org.knime.base.node.io.csvwriter.CSVWriter;
 import org.knime.base.node.io.csvwriter.FileWriterSettings;
-import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpecCreator;
-import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTable;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.DataType;
 import org.knime.core.data.DoubleValue;
 import org.knime.core.data.IntValue;
-import org.knime.core.data.RowKey;
 import org.knime.core.data.date.DateAndTimeValue;
-import org.knime.core.data.def.DefaultRow;
 import org.knime.core.data.def.IntCell;
 import org.knime.core.data.def.StringCell;
-import org.knime.core.node.BufferedDataContainer;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
@@ -121,11 +116,20 @@ final class FileTransferClientNodeModel extends NodeModel {
     @Override
     protected void validateSettings(final NodeSettingsRO settings)
             throws InvalidSettingsException {
+    	// null
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
+            throws InvalidSettingsException {
 
-    	// new FileTransferClientConfig().loadSettingsInModel(settings);
-    	
-    	// driver,database,user,passwordは予約語ぽい
-    	// これらはpackage org.knime.core.node.port.database.DatabaseConnectionSettingsにあり
+    	FileTransferClientConfig config = new FileTransferClientConfig();
+        config.loadSettingsInModel(settings);
+        m_config = config;                
+
         if (conn == null) {
         	LOGGER.info("validSettings: conn is created.");
         	conn = new DatabaseQueryConnectionSettings(settings, getCredentialsProvider());
@@ -167,18 +171,6 @@ final class FileTransferClientNodeModel extends NodeModel {
         }
     	return result;
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
-
-    	FileTransferClientConfig config = new FileTransferClientConfig();
-        config.loadSettingsInModel(settings);
-        m_config = config;                
-    }
 
     /**
      * {@inheritDoc}
@@ -188,103 +180,101 @@ final class FileTransferClientNodeModel extends NodeModel {
             final ExecutionContext exec) throws CanceledExecutionException,
             IOException {
 
-    	int intRet = -2;
-        final String strFileName = "/tmp/hivewriter_" + System.identityHashCode(this) + ".csv";
+    	int intRet = -4;
+    	File tempFile = File.createTempFile("hivewriter_", ".csv");
+    	LOGGER.info("Temporary file file has been created : " + tempFile);
     	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
     	// 結果をファイルに書き出す
     	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    	m_settings = new FileWriterNodeSettings();
-    	csv_execute(inData,exec);
-    	
+    	if(intRet == -4){
+	    	m_settings.setFileName(tempFile.toString());
+	    	csv_execute(inData,tempFile,exec);
+	    	intRet++;
+    	}
     	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
     	// 当該ファイルをsftpで送り込む
     	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        exec.setProgress("Sending file ...");
-    	FileSystemManager fsm = VFS.getManager();
-    	FileSystemOptions opts = new FileSystemOptions();
-    	
-    	// known_hostsのチェックをスキップするよう設定します
-    	SftpFileSystemConfigBuilder builder = SftpFileSystemConfigBuilder.getInstance();
-    	builder.setStrictHostKeyChecking(opts, "no");
-    	
-    	// sftpプロトコルを指定してファイルを取得します
-    	// （ホームディレクトリからの相対パス指定はうまく動作しませんでした）
-    	String execUrl = "sftp://"
-			+ m_config.m_user + ":" + "xxx" + "@"
-			+ m_config.m_serverurl + strFileName;    	
-    	LOGGER.info("execUrl: " + execUrl);
-    	execUrl = "sftp://"
-			+ m_config.m_user + ":" + m_config.m_password + "@"
-			+ m_config.m_serverurl + strFileName;    	
-    	FileObject fileObj = fsm.resolveFile(execUrl, opts);
-    	
-    	// IOUtilsの使い方
-    	// String fileStr = IOUtils.toString(file.getContent().getInputStream(), "UTF-8");
-        // IOUtils.write(HELLO_HADOOP_STR, output);
-
-    	InputStream input = new FileInputStream(m_settings.getFileName());
-        OutputStream output = fileObj.getContent().getOutputStream();
-        Integer length = copyStream(input,output,2048);
-        if(length > 0){
-        	intRet++;
-        	LOGGER.info("transferedSize: " + length.toString());
-        }else{
-        	LOGGER.error("transfer was failed.");
-        }
-        IOUtils.closeQuietly(output);
+    	if(intRet == -3){
+	        exec.setProgress("Sending file ...");
+	    	FileSystemManager fsm = VFS.getManager();
+	    	FileSystemOptions opts = new FileSystemOptions();
+	    	
+	    	// known_hostsのチェックをスキップするよう設定します
+	    	SftpFileSystemConfigBuilder builder = SftpFileSystemConfigBuilder.getInstance();
+	    	builder.setStrictHostKeyChecking(opts, "no");
+	    	
+	    	// sftpプロトコルを指定してファイルを取得します
+	    	// （ホームディレクトリからの相対パス指定はうまく動作しませんでした）
+	    	String execUrl = "sftp://"
+				+ m_config.m_user + ":" + "xxx" + "@"
+				+ m_config.m_serverurl + "/tmp/"+tempFile.getName();
+	    	LOGGER.info("execUrl: " + execUrl);
+	    	execUrl = "sftp://"
+				+ m_config.m_user + ":" + m_config.m_password + "@"
+				+ m_config.m_serverurl + "/tmp/"+tempFile.getName();    	
+	    	FileObject fileObj = fsm.resolveFile(execUrl, opts);
+	    	
+	    	// IOUtilsの使い方
+	    	// String fileStr = IOUtils.toString(file.getContent().getInputStream(), "UTF-8");
+	        // IOUtils.write(HELLO_HADOOP_STR, output);
+	
+	    	InputStream input = new FileInputStream(tempFile);
+	        OutputStream output = fileObj.getContent().getOutputStream();
+	        Integer length = copyStream(input,output,2048);
+	        if(length > 0){
+	        	LOGGER.info("transferedSize: " + length.toString());
+	        	intRet++;
+	        }else{
+	        	LOGGER.error("transfer was failed.");
+	        }
+	        IOUtils.closeQuietly(output);
+	        tempFile.deleteOnExit();
+    	}
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
     	// TBLの存在をチェックし、存在しなければ作る
-    	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
-        try {
-        	LOGGER.info("execute: writeData");
-            HiveConnectionRW objHiveConn = new HiveConnectionRW(conn);
-            
-			String error = objHiveConn.writeData(
-					m_config.table, inData[0], false, exec, m_types);
-        	LOGGER.info("execute: writeData: "+error);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+    	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        if(intRet == -2){
+	        exec.setProgress("Preparing Hive TBL ...");
+            HiveConnectionRW objHiveConn = null;
+	        try {
+	        	if(conn != null){
+	            	objHiveConn = new HiveConnectionRW(conn);
+					String error = objHiveConn.writeData(
+							m_config.table, inData[0], m_config.csvSerde, exec, m_types);
+		        	intRet++;
+		        	if(error.length() > 0){
+		        		LOGGER.info("execute: writeData: "+error);
+		        	}
+	        	}else{
+	        		LOGGER.info("execute: conn is null.");
+	        	}
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+        }
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
     	// JDBC経由で"LOAD DATA LOCAL INPATH './examples/files/kv1.txt' OVERWRITE INTO TABLE pokes"
-    	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
-        exec.setProgress("Making Hive load file ...");
-        ResultSet result = execHiveQuery(
-        		"load data local inpath '" + strFileName + "' overwrite into table " + m_config.table
-        );
-    	if(result != null){
-        	intRet++;
-            LOGGER.info("hive load may be OK.");
-    	}else{
-            LOGGER.error("cannot load data on hive.");
-    	}
+    	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        if(intRet == -1){
+	        exec.setProgress("Making Hive load file ...");
+	        ResultSet result = execHiveQuery(
+	        		"load data local inpath '" + "/tmp/"+tempFile.getName() + "' overwrite into table " + m_config.table
+	        );
+	    	if(result != null){
+	        	intRet++;
+	            LOGGER.info("hive load may be OK.");
+	    	}else{
+	            LOGGER.error("cannot load data on hive.");
+	    	}
+        }
         
     	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
-    	// 次ノードに引き継ぐテーブルをゼロから作る
-    	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
-    	// init spec
-        exec.setProgress("Making result table ...");
-		BufferedDataContainer container = exec.createDataContainer(makeTableSpec());
-
-		// add arbitrary number of rows to the container
-		DataRow firstRow = new DefaultRow(
-			new RowKey("first"), // KNIME専用のデータ
-			new DataCell[]{new StringCell("result"), new IntCell(intRet)} ); // 実データ
-		container.addRowToTable(firstRow);
-    	
-		/*
-    	DataRow secondRow = new DefaultRow(new RowKey("second"), new DataCell[]{
-    	    new StringCell("B1"), new DoubleCell(2.0)
-    	});
-    	container.addRowToTable(secondRow);
-    	*/
-
-    	// finally close the container and get the result table.
-    	container.close();
-    	  
+    	// 次ノードへの接続が無いので空テーブルを戻す
+    	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -      	  
+        LOGGER.info("hivewriter retcode: " + intRet);
         return new BufferedDataTable[0];
     }
     
@@ -296,12 +286,12 @@ final class FileTransferClientNodeModel extends NodeModel {
     }
 
     // CSVファイルに、前から来たBufferTableを出力する
-    protected void csv_execute(final BufferedDataTable[] data,
+    protected void csv_execute(final BufferedDataTable[] data, File objFile,
             final ExecutionContext exec) throws CanceledExecutionException,
             IOException {
         DataTable in = data[0];
 
-        File file = new File(m_settings.getFileName());
+        File file = objFile;
         File parentDir = file.getParentFile();
         boolean dirCreated = false;
         if (!parentDir.exists()) {

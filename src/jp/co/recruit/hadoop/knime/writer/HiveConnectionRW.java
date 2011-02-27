@@ -334,16 +334,18 @@ public final class HiveConnectionRW {
 	 */
 	final String writeData(
 	        final String table, final BufferedDataTable data,
-	        final boolean appendData, final ExecutionMonitor exec,
+	        final boolean csvSerde, final ExecutionMonitor exec,
 	        final Map<String, String> sqlTypes) throws Exception {
 		
 	    final Connection conn = m_conn.createConnection();
+	    // final Boolean appendData = false;
+	    
 	    DataTableSpec spec = data.getDataTableSpec();
 	    
 	    // mapping from spec columns to database columns
 	    final int[] mapping;
 	    // append data to existing table
-	    if (appendData) {
+	    if (false) {
         	LOGGER.info("writeData: appendData");
 
 	        Statement statement = null;
@@ -489,10 +491,14 @@ public final class HiveConnectionRW {
 	                    + "\", will create new table.");
 	        }
 	        // and create new table
-	        final String query = "CREATE TABLE " + table + " "
-	            + createStmt(spec, sqlTypes)
-                + " ROW FORMAT DELIMITED FIELDS TERMINATED BY ','"
+	        String query = "CREATE TABLE " + table + " "
+	            + createStmt(spec, sqlTypes);
+	        if(csvSerde){
+	        	query += " ROW FORMAT SERDE 'com.bizo.hive.serde.csv.CSVSerde'";
+	        }else{
+	        	query += " ROW FORMAT DELIMITED FIELDS TERMINATED BY ','"
                 + " LINES TERMINATED BY '\n'";
+	        }
 	        LOGGER.debug("Executing SQL statement \"" + query + "\"");
 	        statement.execute(query);
 	        statement.close();

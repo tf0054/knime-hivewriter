@@ -1,34 +1,19 @@
 package jp.co.recruit.hadoop.knime.writer;
 
 import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.util.Collection;
-import java.util.Map;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JEditorPane;
 import javax.swing.JList;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
-import javax.swing.ListSelectionModel;
-import javax.swing.ScrollPaneConstants;
 
-import org.knime.base.node.io.database.DBVariableSupportNodeModel;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.KNIMEConstants;
 import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.NotConfigurableException;
 import org.knime.core.node.port.PortObjectSpec;
-import org.knime.core.node.port.database.DatabaseConnectionSettings;
-import org.knime.core.node.port.database.DatabaseQueryConnectionSettings;
-import org.knime.core.node.util.FlowVariableListCellRenderer;
-import org.knime.core.node.workflow.FlowVariable;
 
 /**
  *
@@ -36,13 +21,11 @@ import org.knime.core.node.workflow.FlowVariable;
  */
 class FileTransferClientDialogPane extends NodeDialogPane {
 
-    private final boolean m_hasLoginPane;
-    private final HiveDialogPane m_loginPane = new HiveDialogPane();
+    private final HiveDialogPane m_HiveDialogPane = new HiveDialogPane();
 
-    private final JEditorPane m_statmnt = new JEditorPane("text", "");
+    // private final DefaultListModel m_listModelVars;
 
-    private final DefaultListModel m_listModelVars;
-    private final JList m_listVars;
+    private final AdditionalPanel m_advancedPanel;
 
     /**
      * Creates new dialog.
@@ -53,16 +36,16 @@ class FileTransferClientDialogPane extends NodeDialogPane {
                 
         JPanel allPanel = new JPanel(new BorderLayout());
 
-        m_hasLoginPane = hasLoginPane;
-        if (hasLoginPane) {
-            allPanel.add(m_loginPane, BorderLayout.NORTH);
-        }
+        allPanel.add(m_HiveDialogPane, BorderLayout.NORTH);
 
         // init variable list
-        m_listModelVars = new DefaultListModel();
-        m_listVars = new JList(m_listModelVars);
+        // m_listModelVars = new DefaultListModel();
 
         super.addTab("Settings", allPanel);
+        
+        m_advancedPanel = new AdditionalPanel();
+        super.addTab("Advanced", m_advancedPanel);
+
     }
 
     /**
@@ -71,7 +54,14 @@ class FileTransferClientDialogPane extends NodeDialogPane {
     @Override
     protected void loadSettingsFrom(final NodeSettingsRO settings,
             final PortObjectSpec[] specs) throws NotConfigurableException {
-            m_loginPane.loadSettingsFrom(settings, specs);
+
+    	try {
+        	m_HiveDialogPane.loadSettingsFrom(settings, specs);
+            m_advancedPanel.loadValuesIntoPanel(settings);
+		} catch (InvalidSettingsException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
     }
 
@@ -81,12 +71,8 @@ class FileTransferClientDialogPane extends NodeDialogPane {
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings)
             throws InvalidSettingsException {
-        //if (m_hasLoginPane) {
-            m_loginPane.saveSettingsTo(settings);
-        //}
-        /*
-        settings.addString(DatabaseConnectionSettings.CFG_STATEMENT,
-                m_statmnt.getText().trim());
-        */
+    	
+		m_HiveDialogPane.saveSettingsTo(settings);
+        m_advancedPanel.saveValuesFromPanelInto(settings);
     }
 }

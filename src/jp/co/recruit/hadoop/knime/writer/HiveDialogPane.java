@@ -27,6 +27,7 @@ import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
@@ -198,9 +199,10 @@ final class HiveDialogPane extends JPanel {
      * @param settings to load
      * @param specs input spec
      * @param creds credentials
+     * @throws InvalidSettingsException 
      */
     protected void loadSettingsFrom(final NodeSettingsRO settings,
-            final PortObjectSpec[] specs) {
+            final PortObjectSpec[] specs) throws InvalidSettingsException {
     	
     	// 都度newしてsettingsから戻しているので、tablesは消えちゃう。。。。    	
     	FileTransferClientConfig config = new FileTransferClientConfig();
@@ -233,7 +235,6 @@ final class HiveDialogPane extends JPanel {
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
         m_table.removeAllItems();
         if(config.tables != null){
-	    	LOGGER.error("dialog-tables: "+config.tables.size());
 	        updateTable(config.tables);
         }
         String tableName = settings.getString("table", m_table.getEditor().getItem().toString());
